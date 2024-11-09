@@ -9,8 +9,6 @@ import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg, NavigationToolbar2Tk)
 import json
 import matplotlib
 import tkinter as tk
@@ -470,7 +468,6 @@ class StockApp(App):
         self.debug_mode = False
         self.footer = Footer()
         LOGGER.display = 'none'
-        # self.set_focus(self.dashboard)
 
     def __add_stock(self, stock_symbol: str):
         self.dashboard.add_stock(Stock(stock_symbol))
