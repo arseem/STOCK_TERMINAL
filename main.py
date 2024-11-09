@@ -29,9 +29,9 @@ INTERVAL_UNITS = ['1m', '2m', '5m', '15m', '30m',
 INTERVAL_UNITS_TYPE = Literal['1m', '2m', '5m', '15m', '30m',
                               '60m', '90m', '1h', '1d', '5d', '1wk', '1mo']
 
-CALCULATIONS = ['MAVG', 'EMA', 'RSI', 'MACD', 'BOLLINGER', 'STOCHASTIC']
+CALCULATIONS = ['MAVG', 'EMA', 'BOLLINGER']
 CALCULATIONS_TYPE = Literal['MAVG', 'EMA',
-                            'RSI', 'MACD', 'BOLLINGER', 'STOCHASTIC']
+                            'BOLLINGER']
 
 
 # FUNCTIONS ########################################
@@ -44,14 +44,6 @@ def calculate_exponential_moving_average(data, window: int):
     return data['Close'].ewm(span=window, adjust=False).mean()
 
 
-def calculate_rsi(data, window: int):
-    delta = data['Close'].diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
-    rs = gain / loss
-    return 100 - (100 / (1 + rs))
-
-
 def calculate_bollinger_bands(data, window: int):
     sma = data['Close'].rolling(window=window).mean()
     std = data['Close'].rolling(window=window).std()
@@ -60,20 +52,10 @@ def calculate_bollinger_bands(data, window: int):
     return upper, lower
 
 
-def calculate_stochastic_oscillator(data, window: int):
-    low_min = data['Low'].rolling(window=window).min()
-    high_max = data['High'].rolling(window=window).max()
-    k = 100 * (data['Close'] - low_min) / (high_max - low_min)
-    d = k.rolling(window=3).mean()
-    return k, d
-
-
 CALCULATIONS_DICT = {
     'MAVG': calculate_moving_average,
     'EMA': calculate_exponential_moving_average,
-    'RSI': calculate_rsi,
     'BOLLINGER': calculate_bollinger_bands,
-    'STOCHASTIC': calculate_stochastic_oscillator
 }
 
 
@@ -176,6 +158,7 @@ class Stock:
         self.graph_period = '1d'
         self.active_graph = None
         self.active_graph_thread = None
+        self.calculations = []
         self.refresh()
 
     def __str__(self):
@@ -193,16 +176,24 @@ class Stock:
             f'{self.symbol} ({self.last_refreshed}): {self.current_value} ({self.change_percent})')
 
     def get_data(self, period: PERIOD_UNITS_TYPE, interval: INTERVAL_UNITS_TYPE):
-        if period not in PERIOD_UNITS:
-            raise PeriodNotSupportedException()
-        if interval not in INTERVAL_UNITS:
-            raise IntervalNotSupportedException()
-
         try:
-            self.current_data = self.ticker.history(
-                period=period, interval=interval)
-        except Exception as e:
-            raise StockDataFetchException(str(e))
+            if period not in PERIOD_UNITS:
+                raise PeriodNotSupportedException()
+            if interval not in INTERVAL_UNITS:
+                raise IntervalNotSupportedException()
+
+            try:
+                self.current_data = self.ticker.history(
+                    period=period, interval=interval)
+            except Exception as e:
+                raise StockDataFetchException(str(e))
+
+        except PeriodNotSupportedException as e:
+            LOGGER.write(F"Error fetching data: {e}")
+        except IntervalNotSupportedException as e:
+            LOGGER.write(F"Error fetching data: {e}")
+        except StockDataFetchException as e:
+            LOGGER.write(F"Error fetching data: {e}")
 
         return self.current_data
 
@@ -269,8 +260,11 @@ class StockInputBar(Input):
         self.add_stock = add_stock
 
     def action_input_submitted(self):
-        self.add_stock(self.value)
-        LOGGER.write(f'Adding stock {self.value}')
+        try:
+            self.add_stock(self.value)
+            LOGGER.write(f'Adding stock {self.value}')
+        except Exception as e:
+            LOGGER.write(f'Adding stock {self.value} FAILED: {e}')
         self.clear()
         self.remove()
 
@@ -330,7 +324,7 @@ class DashboardWidget(Widget):
 
     def create_table(self):
         self.data_table.add_columns(
-            "Symbol", "Price (USD)", "Change (%)", "Active Graph", "Period", "Interval")
+            "Symbol", "Price (USD)", "Change (%)", "Active Graph", "Period", "Interval", *[calc for calc in CALCULATIONS])
         for stock in self.dashboard.stocks:
             color = "green" if stock.change_percent >= 0 else "red"
             period_string_regex = re.search(r'\] (.*?) \[', stock.graph_period)
@@ -343,6 +337,7 @@ class DashboardWidget(Widget):
                 '✔' if stock.active_graph else '✖',
                 period_string_regex if period_string_regex else stock.graph_period,
                 interval_string_regex if interval_string_regex else stock.graph_interval,
+                *['✔' if calc in stock.calculations else '✖' for calc in CALCULATIONS]
             )
 
     def add_stock(self, stock: Stock):
@@ -386,6 +381,18 @@ class DashboardWidget(Widget):
                 self.__show_options(self.interval_options, INTERVAL_UNITS.index(
                     self.selected_stock.graph_interval), event.value)
 
+            case _:
+                if event.coordinate[1] > 5:
+                    calc = CALCULATIONS[event.coordinate[1] - 6]
+                    if calc in self.selected_stock.calculations:
+                        self.selected_stock.calculations.remove(calc)
+                    else:
+                        self.selected_stock.calculations.append(calc)
+                    self.data_table.update_cell_at(
+                        event.coordinate, '✔' if calc in self.selected_stock.calculations else '✖')
+                    if self.selected_stock.active_graph:
+                        self.graph(no_close=True)
+
     def graph(self, no_close=False):
         try:
             if self.selected_stock.active_graph and not no_close:
@@ -411,7 +418,7 @@ class DashboardWidget(Widget):
                     self.selected_stock.active_graph = plt.figure(
                         figsize=(16, 8))
                 plot_time_series(
-                    data, f'{symbol} Price', interval, ('MAVG', ), self.selected_stock.active_graph)
+                    data, f'{symbol} Price', interval, self.selected_stock.calculations, self.selected_stock.active_graph)
         except InvalidGraphConfigurationException as e:
             LOGGER.write(str(e))
         except Exception as e:
@@ -463,6 +470,7 @@ class StockApp(App):
         self.debug_mode = False
         self.footer = Footer()
         LOGGER.display = 'none'
+        # self.set_focus(self.dashboard)
 
     def __add_stock(self, stock_symbol: str):
         self.dashboard.add_stock(Stock(stock_symbol))
@@ -476,11 +484,11 @@ class StockApp(App):
             json.dump({"stocks": stock_symbols}, f)
 
     def compose(self) -> ComposeResult:
+        with Horizontal():
+            yield self.dashboard
         yield Header()
         yield LOGGER
         yield self.footer
-        with Horizontal():
-            yield self.dashboard
 
     def action_toggle_dark(self) -> None:
         self.dark = not self.dark
@@ -506,9 +514,6 @@ class StockApp(App):
     def action_remove_stock(self) -> None:
         self.dashboard.remove_stock()
         self.__save_data()
-
-    def action_quit(self):
-        return super().action_quit()
 
 
 def main():
