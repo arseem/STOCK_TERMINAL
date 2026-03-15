@@ -1,22 +1,66 @@
-#### Instalacja zależności
+# 📈 Terminal Stock Tracker
+
+A lightweight, asynchronous Text User Interface (TUI) for real-time stock monitoring and financial indicator visualization directly in the terminal. Built for developers who want to track markets without leaving their command-line workflow.
+
+## 🛠️ Tech Stack
+
+- **Language:** Python 3
+- **Framework:** [Textual](https://github.com/Textualize/textual) (Asynchronous TUI framework)
+- **Features:** Real-time data fetching, dynamic time-series graphing, and applied financial indicators.
+
+## 🚀 Features & Indicators
+
+- **Real-Time Tracking:** Add, remove, and monitor stock symbols instantly.
+- **Dynamic Charting:** Interactive terminal-based graphs with adjustable periods and intervals.
+- **Technical Analysis:** Toggle overlays for:
+  - **MAVG** (Moving Average)
+  - **EMA** (Exponential Moving Average)
+  - **Bollinger Bands**
+
+## 💻 Installation & Usage
+
+1. **Install dependencies:**
+
 ```bash
 pip install -r requirements.txt
 ```
 
-#### Uruchomienie aplikacji
+2. **Run the application:**
+
 ```bash
 textual run main.py
 ```
 
-#### Korzystanie z aplikacji
-- a - dodaj nowy symbol
-- R - usuń symbol (rząd, w którym znajduje się kursor)
-- F5 - odśwież dane
-- q - zapisz dane i wyjdź
-- ctrl+d - tryb debugowania (konsola z logami)
+## ⌨️ Keybindings & Controls
 
-Aby uruchomić wykres, należy skierować kursor na pole 'Active graph' wybranego rzędu w tabeli i nacisnąć klawisz 'Enter'. Taką samą operację należy wykonać, aby zamknąć wykres.
+- `a` - Add a new stock symbol
+- `R` - Remove the selected symbol (row under cursor)
+- `F5` - Refresh market data
+- `q` - Save current portfolio and quit
+- `Ctrl+D` - Toggle debug mode (log console)
+- `t` - Toggle **inline** chart mode for the highlighted stock (dots ↔ candles)
 
-Aby zmienić okres lub interwał wykresu, należy skierować kursor na pole 'Period' lub 'Interval' wybranego rzędu w tabeli i nacisnąć klawisz 'Enter'. Następnie należy wybrać strząłkami góra/dół odpowiednią wartość i zatwierdzić ją klawiszem 'Enter'.
+**Interactive Table Controls:**
 
-Aby nałożyć na wykres wybrane wskaźniki (MAVG - średnia ruchoma, EMA - wykładnicza średnia ruchoma, BOLLINGER - wstęgi Bollingera), należy skierować kursor na odpowiednie pole w tabeli i nacisnąć klawisz 'Enter'. Aby usunąć wskaźniki, należy ponownie nacisnąć klawisz 'Enter'.
+- **Inline graph (always visible):** The chart below the table always shows the stock on the currently highlighted row.
+  - Default inline mode is **dots** (braille marker) for higher visual precision.
+- **Fullscreen graph:** Select the **Active Graph** column and press `Enter`.
+  - `Enter` or `Esc` closes fullscreen.
+  - Default fullscreen mode is **candles**.
+
+**Graph Controls (Fullscreen):**
+
+- `←` / `→` - Move candle cursor by 1
+- `Shift+←` / `Shift+→` - Move candle cursor by 10
+- `Home` / `End` - Jump to first / last candle
+- `t` - Toggle fullscreen chart mode (candles ↔ dots)
+- Mouse hover - Updates the top info ribbon to the nearest candle
+
+**Indicators & Data Controls:**
+
+- **Change period/interval:** Focus **Period** or **Interval**, press `Enter`, use `Up/Down`, then `Enter` to confirm.
+- **Toggle indicators:** Focus the indicator column (MAVG, EMA, BOLLINGER) and press `Enter` to apply/remove.
+
+**Info ribbon (Fullscreen):**
+
+- The top ribbon shows the full timestamp and OHLC (and Volume when available) for the hovered/cursor candle.
