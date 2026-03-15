@@ -2,6 +2,8 @@
 
 A lightweight, asynchronous Text User Interface (TUI) for real-time stock monitoring and financial indicator visualization directly in the terminal. Built for developers who want to track markets without leaving their command-line workflow.
 
+![Showcase](./media/tui-ticker-showcase.gif)
+
 ## 🛠️ Tech Stack
 
 - **Language:** Python 3
