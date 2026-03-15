@@ -7,5 +7,8 @@ Run with: `textual run main.py`
 from stock_terminal.app import main
 
 
-if __name__ == "__main__":
+def run_app():
     main()
+
+if __name__ == "__main__":
+    run_app()

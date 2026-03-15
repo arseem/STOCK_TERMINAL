@@ -1,4 +1,4 @@
-# 📈 Terminal Stock Tracker
+# 📈 tui-ticker - Terminal Stock Tracker
 
 A lightweight, asynchronous Text User Interface (TUI) for real-time stock monitoring and financial indicator visualization directly in the terminal. Built for developers who want to track markets without leaving their command-line workflow.
 
@@ -18,6 +18,14 @@ A lightweight, asynchronous Text User Interface (TUI) for real-time stock monito
   - **Bollinger Bands**
 
 ## 💻 Installation & Usage
+
+The easiest way to install `tui-ticker` globally is using [pipx](https://pipx.pypa.io/):
+
+```bash
+pipx install git+https://github.com/arseem/tui-ticker.git
+```
+
+Or, if you want to run it from source yourself:
 
 1. **Install dependencies:**
 

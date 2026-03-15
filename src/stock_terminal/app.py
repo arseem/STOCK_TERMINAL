@@ -418,7 +418,7 @@ class GraphScreen(Screen):
         self.render_graph()
 
 
-class StockApp(App):
+class TuiTicker(App):
     BINDINGS = [
         ("a", "add_stock", "Add stock"),
         ("f5", "refresh", "Refresh data"),
@@ -545,5 +545,5 @@ def main() -> None:
     except json.JSONDecodeError:
         print("Error decoding JSON file.")
 
-    app = StockApp(dashboard=dashboard, log_buffer=preload_logs)
+    app = TuiTicker(dashboard=dashboard, log_buffer=preload_logs)
     app.run()

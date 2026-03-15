@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tui-ticker"
+version = "1.0.0"
+description = "A terminal-based stock tracker and technical analysis TUI."
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "textual==0.85.1",
+    "textual-dev==1.6.1",
+    "textual-plotext==0.2.1",
+    "textual-serve==1.1.1",
+    "pandas>=2.0.0",
+    "yfinance>=0.2.0",
+]
+
+[project.scripts]
+tui-ticker = "main:run_app"
